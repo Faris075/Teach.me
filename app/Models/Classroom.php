@@ -39,6 +39,6 @@ class Classroom extends Model
 
     public function materials(): HasMany
     {
-        return $this->hasManyThrough(Material::class, Topic::class);
+        return $this->hasMany(Material::class, Topic::class);
     }
 }
