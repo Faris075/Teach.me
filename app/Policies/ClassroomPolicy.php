@@ -35,7 +35,7 @@ class ClassroomPolicy
         return $user->id === $classroom->teacher_id;
     }
 
-    public function delete(User $user, Classroom $classroom): bool
+    public function delete(User $user, Classroom $classroom): Response|bool
     {
         // Institutional teachers may only archive — not delete
         if ($user->role === 'teacher' && ! $user->is_independent) {
