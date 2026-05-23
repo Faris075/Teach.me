@@ -36,4 +36,4 @@ class GradePublishedNotification extends Notification
 }
 
             //
-        ]];
+        };
