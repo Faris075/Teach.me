@@ -103,7 +103,7 @@
                                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Feedback <span class="font-normal">(optional)</span></label>
                                 <textarea name="teacher_comment" rows="4"
                                           class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                          placeholder="Write feedback for the student...">{{ old('feedback', $sub->feedback) }}</textarea>
+                                          placeholder="Write feedback for the student...">{{ old('teacher_comment', $sub->teacher_comment) }}</textarea>
                             </div>
 
                             <button type="submit"
