@@ -66,9 +66,9 @@ Route::prefix('student')
     ->name('student.')
     ->group(function () {
         Route::get('/dashboard', [StudentController::class, 'index'])->name('dashboard');
-        Route::get('classrooms/{classroom}', [StudentController::class, 'classroom'])->name('classrooms.show');
-        Route::get('assignments/{assignment}', [StudentController::class, 'assignment'])->name('assignments.show');
-        Route::post('assignments/{assignment}/submit', [SubmissionController::class, 'store'])->name('submissions.store');
+        Route::get('classrooms/{classroom}', [StudentController::class, 'showClassroom'])->name('classrooms.show');
+        Route::get('assignments/{assignment}', [StudentController::class, 'showAssignment'])->name('assignments.show');
+        Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store');
         Route::get('notifications', [StudentController::class, 'notifications'])->name('notifications');
         Route::patch('notifications/{notification}/read', [StudentController::class, 'markRead'])->name('notifications.read');
     });
