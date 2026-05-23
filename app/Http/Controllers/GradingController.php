@@ -100,4 +100,3 @@ class GradingController extends Controller
             abort(403);
         }
     }
-}
