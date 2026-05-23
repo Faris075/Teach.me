@@ -6,59 +6,43 @@ use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $user = $request->user();
+
+        $classrooms = $user->enrolledClassrooms()
+            ->with('teacher:id,name')
+            ->withCount('assignments')
+            ->latest('classroom_student.joined_at')
+            ->get();
+
+        return view('student.dashboard', compact('classrooms'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function showClassroom(Request $request, \App\Models\Classroom $classroom)
     {
-        //
+        $user = $request->user();
+
+        if (! $classroom->students()->where('student_id', $user->id)->exists()) {
+            abort(403);
+        }
+
+        $classroom->load(['topics.assignments' => fn($q) => $q->orderBy('due_date')]);
+
+        return view('student.classroom', compact('classroom'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function showAssignment(Request $request, \App\Models\Assignment $assignment)
     {
-        //
-    }
+        $user = $request->user();
+        $classroom = $assignment->topic->classroom;
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        if (! $classroom->students()->where('student_id', $user->id)->exists()) {
+            abort(403);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        $submission = $assignment->submissions()->where('student_id', $user->id)->first();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return view('student.assignment', compact('assignment', 'submission', 'classroom'));
     }
 }
