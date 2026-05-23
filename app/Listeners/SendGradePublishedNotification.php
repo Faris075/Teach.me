@@ -3,24 +3,13 @@
 namespace App\Listeners;
 
 use App\Events\GradePublished;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Notifications\GradePublishedNotification;
 
 class SendGradePublishedNotification
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct()
-    {
-        //
-    }
-
-    /**
-     * Handle the event.
-     */
     public function handle(GradePublished $event): void
     {
-        //
+        $submission = $event->submission->load('student', 'assignment.topic');
+        $submission->student->notify(new GradePublishedNotification($submission));
     }
 }
