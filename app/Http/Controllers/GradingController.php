@@ -6,6 +6,7 @@ use App\Events\GradePublished;
 use App\Models\Assignment;
 use App\Models\Submission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class GradingController extends Controller
 {
