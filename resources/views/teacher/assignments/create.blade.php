@@ -13,7 +13,7 @@
 
     <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Create Assignment</h1>
 
-    <form method="POST" action="{{ route('teacher.assignments.store', $classroom) }}"
+    <form method="POST" action="{{ route('teacher.classrooms.assignments.store', $classroom) }}"
           class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 space-y-5">
         @csrf
 
