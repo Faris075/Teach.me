@@ -9,14 +9,15 @@ class Submission extends Model
 {
     protected $fillable = [
         'assignment_id', 'student_id', 'file_path',
-        'submitted_text', 'grade', 'teacher_comment', 'status', 'graded_at',
+        'submitted_text', 'grade_numeric', 'grade_literal',
+        'teacher_comment', 'status', 'graded_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'graded_at' => 'datetime',
-            'grade'     => 'decimal:2',
+            'graded_at'     => 'datetime',
+            'grade_numeric' => 'decimal:2',
         ];
     }
 

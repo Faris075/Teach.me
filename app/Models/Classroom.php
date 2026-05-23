@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Classroom extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['school_id', 'teacher_id', 'name', 'class_code', 'status'];
 
     public function school(): BelongsTo
@@ -39,6 +42,6 @@ class Classroom extends Model
 
     public function materials(): HasMany
     {
-        return $this->hasMany(Material::class, Topic::class);
+        return $this->hasManyThrough(Material::class, Topic::class);
     }
 }

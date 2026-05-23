@@ -18,11 +18,16 @@ class User extends Authenticatable
     use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
+        'uuid',
+        'school_id',
+        'is_independent',
         'name',
         'email',
         'password',
         'role',
-        'school_id',
+        'candidate_number',
+        'parent_email',
+        'status',
     ];
 
     protected $hidden = [
@@ -35,6 +40,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'is_independent'    => 'boolean',
         ];
     }
 

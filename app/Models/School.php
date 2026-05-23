@@ -4,10 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class School extends Model
 {
-    protected $fillable = ['name', 'domain', 'status'];
+    use SoftDeletes;
+
+    protected $fillable = ['uuid', 'name', 'domain', 'branding_config', 'status'];
+
+    protected function casts(): array
+    {
+        return [
+            'branding_config' => 'array',
+        ];
+    }
 
     public function users(): HasMany
     {
