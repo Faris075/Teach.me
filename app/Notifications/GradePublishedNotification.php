@@ -2,52 +2,39 @@
 
 namespace App\Notifications;
 
+use App\Models\Submission;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class GradePublishedNotification extends Notification
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
+    public function __construct(public readonly Submission $submission)
     {
-        //
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
+        $assignment = $this->submission->assignment;
+
         return [
+            'assignment_id'   => $assignment->id,
+            'assignment_title' => $assignment->title,
+            'classroom_id'    => $assignment->topic->classroom_id,
+            'grade_numeric'   => $this->submission->grade_numeric,
+            'grade_literal'   => $this->submission->grade_literal,
+            'feedback'        => $this->submission->feedback,
+            'url'             => route('student.assignments.show', $assignment),
+        ];
+    }
+}
+
             //
         ];
     }
