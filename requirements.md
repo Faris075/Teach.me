@@ -777,7 +777,7 @@ Phase 2 (Auth Shell)
 ### Credentials After Seeding
 
 | Role | Email | Password |
-|---   |  ---  |   ---    |
+|--- |  ---  |   ---    |
 | Super Admin | `superadmin@teach.me` | `password` |
 | School Admin | `admin@teach.me` | `password` |
 | Independent Teacher | `teacher@teach.me` | `password` |
