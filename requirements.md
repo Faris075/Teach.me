@@ -318,20 +318,25 @@ public function delete(User $user, Classroom $classroom): Response
 ### Epic 3 — Assignment, Submission & Grading Engine
 
 **Req 3.1 — Assignment Creation (Teacher)**
-- Multi-part form: Title, Description (rich text), optional File Upload (PDF/DOCX only, max 10MB), Due Date via **Flatpickr** datetime picker, and Max Score field (default 100).
+- Multi-part form: Title, Description (rich text), optional File Upload (PDF/DOCX only, max 10MB), Due Date via **Flatpickr** datetime picker, Max Score field (default 100), **Grading Type** selector (`Percentage` or `IGCSE Letter`), and **Allow Late Submissions** toggle (default: on).
 - File stored via `Storage::disk('private')->put("tenants/{school_id}/assignments/", ...)`. Path saved to `assignments.file_path`.
 - Dispatches a queued `NotifyClassroomStudents` job on save (see Epic 4, Req 4.2).
 
 **Req 3.2 — Student Submission Portal**
-- Per-assignment status badge: `Missing` (overdue, no submission) · `Pending` · `Graded` · `Turned In Late`.
+- Per-assignment status badge: `Missing` (overdue, no submission) · `Submitted` · `Graded` · `Turned In Late`.
 - Student may upload one file (PDF/DOCX/PNG/JPG, max 10MB) OR enter a text response. Both cannot be empty.
-- Late detection: if `now() > assignments.due_date` at submission time, set `submissions.status = 'turned_in_late'` automatically.
+- **Late submission handling:**
+  - If `now() > assignments.due_date` AND `allow_late_submissions = true`: accept the file, set `submissions.status = 'turned_in_late'`.
+  - If `now() > assignments.due_date` AND `allow_late_submissions = false`: reject immediately with HTTP 422 and a clear error message.
 
 **Req 3.3 — Grading Interface (Teacher)**
 - Split-screen layout:
   - **Left pane**: Renders submitted file (PDF iframe or download link via signed URL) or submitted text.
-  - **Right pane**: Numeric grade input (`0` – `max_score`), feedback textarea, Save button.
-- Saving a non-null grade sets `graded_at = now()` and fires the `GradePublished` event (see Epic 4, Req 4.1).
+  - **Right pane**: Grade input (adapts to `assignments.grading_type`):
+    - `percentage`: Numeric input `0` – `max_score` → saved to `submissions.grade_numeric`.
+    - `igcse_letter`: Dropdown or segmented control (A\*, A, B, C, D, E, U or 9–1) → saved to `submissions.grade_literal`; teacher may optionally enter a numeric equivalent into `grade_numeric` for statistical purposes.
+  - Feedback textarea and Save button shared by both modes.
+- Saving a non-null `grade_numeric` **or** `grade_literal` sets `graded_at = now()` and fires the `GradePublished` event (see Epic 4, Req 4.1).
 - Paginated list of all student submissions for a given assignment shown above the split-screen.
 
 ---
@@ -339,7 +344,7 @@ public function delete(User $user, Classroom $classroom): Response
 ### Epic 4 — Real-Time Event Notifications
 
 **Req 4.1 — Grade Published Trigger**
-- On `submissions.grade` being set to a non-null value, fire a Laravel Event (`GradePublished`).
+- When `submissions.grade_numeric` **or** `submissions.grade_literal` is saved to a non-null value, fire a Laravel Event (`GradePublished`).
 - Listener dispatches:
   1. A queued `Mail` notification to the student's email.
   2. A `database` notification stored in `notifications` table (Laravel default).
