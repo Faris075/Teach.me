@@ -24,7 +24,7 @@ Route::get('/', function () {
 });
 
 // ── Class Join (guest-accessible) ────────────────────────────────────────────
-Route::get('/join/{class_code}', [ClassroomController::class, 'joinShow'])->name('classroom.join.show');
+Route::get('/join/{class_code?}', [ClassroomController::class, 'joinShow'])->name('classroom.join.show');
 Route::post('/join', [ClassroomController::class, 'join'])->middleware('auth')->name('classroom.join');
 
 // ── Profile (Breeze) ─────────────────────────────────────────────────────────

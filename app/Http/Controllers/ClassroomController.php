@@ -89,10 +89,10 @@ class ClassroomController extends Controller
     }
 
     // ── Student: show join form ────────────────────────────────────────────
-    public function joinShow(Request $request, string $class_code)
+    public function joinShow(Request $request, string $class_code = '')
     {
         // Validate signed URL if signature present, otherwise just show form
-        if ($request->hasValidSignature()) {
+        if ($class_code && $request->hasValidSignature()) {
             $classroom = Classroom::where('class_code', strtoupper($class_code))
                 ->where('status', 'active')
                 ->firstOrFail();
