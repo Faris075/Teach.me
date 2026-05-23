@@ -57,7 +57,7 @@
                             </span>
                         </div>
 
-                        @if($sub->answer)
+                        @if($sub->submitted_text)
                             <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">{{ $sub->submitted_text }}</div>
                         @else
                             <p class="text-sm text-slate-400 dark:text-slate-500">No written answer.</p>
