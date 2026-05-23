@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::create('classrooms', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('school_id')->constrained('schools')->cascadeOnDelete();
+            $table->foreignId('school_id')->nullable()->constrained('schools')->nullOnDelete();
             $table->foreignId('teacher_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
             $table->string('class_code', 8)->unique();
+            $table->index('class_code');
             $table->enum('status', ['active', 'archived'])->default('active');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('classroom_student', function (Blueprint $table) {

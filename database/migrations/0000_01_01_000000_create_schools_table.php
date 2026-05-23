@@ -10,10 +10,13 @@ return new class extends Migration
     {
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('domain')->nullable();
-            $table->enum('status', ['active', 'suspended'])->default('active');
+            $table->uuid('uuid')->unique();
+            $table->string('name', 150);
+            $table->string('domain')->unique()->nullable();
+            $table->json('branding_config')->nullable();
+            $table->enum('status', ['active', 'suspended', 'trial'])->default('trial');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
