@@ -37,7 +37,21 @@ class GradingController extends Controller
             ->orderByRaw("CASE status WHEN 'submitted' THEN 0 WHEN 'turned_in_late' THEN 1 ELSE 2 END")
             ->get();
 
-        return view('teacher.grading.index', compact('assignment', 'classroom', 'submissions', 'submission'))->with('current', $submission);
+        $current = $submission;
+
+        return view('teacher.grading.index', compact('assignment', 'classroom', 'submissions', 'current'));
+    }
+
+    public function download(Request $request, Submission $submission)
+    {
+        $assignment = $submission->assignment;
+        $this->authorizeTeacher($request, $assignment->topic->classroom->teacher_id);
+
+        if (! $submission->file_path || ! Storage::disk('private')->exists($submission->file_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('private')->download($submission->file_path);
     }
 
     public function update(Request $request, Submission $submission)
