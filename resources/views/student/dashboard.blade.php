@@ -12,7 +12,7 @@
             <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Welcome, {{ auth()->user()->name }}</h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ now()->format('l, F j, Y') }}</p>
         </div>
-        <a href="{{ route('classroom.join.show', ['class_code' => '']) }}"
+        <a href="{{ route('classroom.join.show') }}"
            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             Join Classroom
@@ -23,7 +23,7 @@
         <div class="text-center py-20 text-slate-400 dark:text-slate-500">
             <svg class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
             <p class="font-medium">You haven't joined any classrooms yet.</p>
-            <a href="{{ route('classroom.join.show', ['class_code' => '']) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm mt-1 inline-block">Join a classroom →</a>
+            <a href="{{ route('classroom.join.show') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm mt-1 inline-block">Join a classroom →</a>
         </div>
     @else
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
