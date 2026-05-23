@@ -51,7 +51,7 @@
                 </div>
             @endif
 
-            <p class="text-sm text-slate-500 dark:text-slate-400">Submitted {{ $submission->submitted_at ? $submission->submitted_at->diffForHumans() : '' }}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Submitted {{ $submission->created_at->diffForHumans() }}</p>
         @else
             {{-- Late check --}}
             @php

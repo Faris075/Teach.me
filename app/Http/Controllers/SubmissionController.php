@@ -48,7 +48,6 @@ class SubmissionController extends Controller
             'submitted_text' => $data['submitted_text'] ?? null,
             'file_path'     => $filePath,
             'status'        => $isLate ? 'turned_in_late' : 'submitted',
-            'submitted_at'  => now(),
         ]);
 
         return redirect()->route('student.assignments.show', $assignment)
