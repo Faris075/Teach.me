@@ -93,7 +93,8 @@ class ClassroomController extends Controller
     {
         // Validate signed URL if signature present, otherwise just show form
         if ($class_code && $request->hasValidSignature()) {
-            $classroom = Classroom::where('class_code', '=', strtoupper($class_code))
+            $classroom = Classroom::query()
+                ->where('class_code', '=', strtoupper($class_code))
                 ->where('status', '=', 'active')
                 ->firstOrFail();
         } else {
@@ -114,7 +115,7 @@ class ClassroomController extends Controller
         $code = strtoupper($data['class_code']);
 
         // Cross-tenant: scope to user's school (or return 404 if none found)
-        $query = Classroom::where('class_code', '=', $code)->where('status', '=', 'active');
+        $query = Classroom::query()->where('class_code', '=', $code)->where('status', '=', 'active');
 
         if ($user->school_id) {
             $query->where('school_id', $user->school_id);
@@ -144,7 +145,7 @@ class ClassroomController extends Controller
         $attempts = 0;
         do {
             $code = Str::upper(Str::random(6));
-            $exists = Classroom::where('class_code', '=', $code)->exists();
+            $exists = Classroom::query()->where('class_code', '=', $code)->exists();
             $attempts++;
         } while ($exists && $attempts < 5);
 
