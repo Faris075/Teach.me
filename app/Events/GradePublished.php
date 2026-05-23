@@ -14,10 +14,3 @@ class GradePublished
     {
     }
 }
-
-    {
-        return [
-            new PrivateChannel('channel-name'),
-        ];
-    }
-}
