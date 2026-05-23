@@ -45,8 +45,8 @@
                     @elseif($submission->grade_numeric !== null)
                         <p class="text-2xl font-bold text-green-800 dark:text-green-300">{{ $submission->grade_numeric }} / {{ $assignment->max_score }}</p>
                     @endif
-                    @if($submission->feedback)
-                        <p class="text-sm text-green-700 dark:text-green-400 mt-2">{{ $submission->feedback }}</p>
+                    @if($submission->teacher_comment)
+                        <p class="text-sm text-green-700 dark:text-green-400 mt-2">{{ $submission->teacher_comment }}</p>
                     @endif
                 </div>
             @endif
@@ -76,7 +76,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Your Answer</label>
-                        <textarea name="answer" rows="5"
+                        <textarea name="submitted_text" rows="5"
                                   class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                   placeholder="Write your answer here...">{{ old('answer') }}</textarea>
                         @error('answer') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

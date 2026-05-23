@@ -58,7 +58,7 @@
                         </div>
 
                         @if($sub->answer)
-                            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">{{ $sub->answer }}</div>
+                            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">{{ $sub->submitted_text }}</div>
                         @else
                             <p class="text-sm text-slate-400 dark:text-slate-500">No written answer.</p>
                         @endif
@@ -101,7 +101,7 @@
 
                             <div>
                                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Feedback <span class="font-normal">(optional)</span></label>
-                                <textarea name="feedback" rows="4"
+                                <textarea name="teacher_comment" rows="4"
                                           class="w-full rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                           placeholder="Write feedback for the student...">{{ old('feedback', $sub->feedback) }}</textarea>
                             </div>
