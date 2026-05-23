@@ -370,13 +370,68 @@ $$\text{Avg Turnaround} = \text{AVG}(\text{submissions.graded\_at} - \text{submi
 
 **Req 5.2 — Student Overview (School Admin)**
 - Tabular view of all students in the school:
-  - Running GPA: `AVG(submissions.grade)` per student.
+  - Running GPA: `AVG(submissions.grade_numeric)` per student.
   - Completion ratio:
 
 $$\text{Completion Ratio} = \left(\frac{\text{COUNT(submissions)}}{\text{COUNT(assigned)}}\right) \times 100\%$$
 
   - Grade-over-time chart (Chart.js) showing individual student trajectory.
 - Filterable by classroom.
+
+---
+
+## 6. Data Privacy & Compliance
+
+### Req 6.1 — Privacy-First Parent Digest Engine
+
+Parents do not receive login credentials and have no access to live message streams, submission content, or real-time activity logs. Instead, a weekly scheduled job aggregates a clean performance summary and delivers it as a formatted email.
+
+**Scheduler trigger:** Every Friday at 18:00 via `Schedule::job(SendParentDigests::class)->weeklyOn(5, '18:00')`.
+
+**Aggregation logic per student:**
+- Average grade: `AVG(submissions.grade_numeric)` over the past 7 days.
+- Missing assignments: count of assignments past `due_date` with no matching submission record.
+- Recent feedback snippets: last 3 non-null `teacher_comment` values.
+
+**Dispatch flow:**
+
+```
+[ Weekly Cron: Friday 18:00 ] ──> [ Query all active students with parent_email set ]
+                                                  │
+                                                  ▼
+                              [ Per student: aggregate grade + missing count ]
+                                                  │
+                                                  ▼
+                                  [ Dispatch queued DigestMail → parent_email ]
+```
+
+- The digest email must **not** include submission file links, chat logs, or any personally identifiable data beyond the student's first name and aggregated metrics.
+- Implemented as a queued `Mailable` so delivery failures do not block the scheduler.
+
+---
+
+### Req 6.2 — Hard Purge (Right to Erasure)
+
+An administrative controller action (`AdminController@hardPurgeUser`) provides GDPR-style account removal. This action is restricted to `super_admin` only and requires explicit confirmation (`DELETE /admin/users/{uuid}/purge`).
+
+**Execution sequence:**
+1. Resolve the user by `uuid` (never by integer `id` in the URL).
+2. Iterate all owned file paths from `submissions`, `assignments`, and `materials` records.
+3. Delete binary assets from the storage driver:
+   ```php
+   Storage::disk('private')->deleteDirectory("tenants/users/{$user->id}");
+   // For institutional users also purge school-scoped paths they own
+   ```
+4. Hard-delete all child DB records via raw queries, bypassing soft-delete:
+   ```php
+   $user->submissions()->forceDelete();
+   $user->classrooms()->each(fn($c) => $c->assignments()->forceDelete());
+   $user->classrooms()->forceDelete();
+   $user->forceDelete();
+   ```
+5. Return a `204 No Content` response on success.
+
+> **Safety gate:** The action must require a confirmation token (e.g., the user's email re-entered in the request body) to prevent accidental triggers.
 
 ---
 
