@@ -1,6 +1,6 @@
 # Functional Requirements Specification (FRS)
 ### Project: Teach.me — LMS Classroom Platform (MVP → Multi-School SaaS)
-> **Revision 2** — Expanded with multi-tenancy architecture, production-grade schema, operational flows, and security constraints.
+> **Revision 3** — Extended with independent-tutor multi-tenancy model, hybrid grading engine, privacy-first parent digest, data erasure compliance, and flexible late-submission controls.
 
 ---
 
@@ -12,13 +12,15 @@
 | Frontend | Blade + Tailwind CSS / Livewire (Monolith) |
 | Database | MySQL 8.0+ or PostgreSQL |
 | Coding Standard | PSR-12, clean MVC, Service-Repository pattern for business logic isolation |
-| Multi-Tenancy | Single database with `school_id` discriminator; global query scoping via middleware |
+| Multi-Tenancy | Single database with `school_id` discriminator + `is_independent` flag; `is_independent = true` users bypass school scoping and are isolated by `teacher_id` instead |
 | Dark Mode | `tailwind.config.js` → `darkMode: 'class'`; preference persisted in `localStorage` + user meta field |
 | File Storage | Laravel `Storage` facade (Flysystem abstraction); local MVP → S3 / Cloudflare R2 / DO Spaces via `.env` swap only |
-| File Security | Submissions stored under private paths `/tenants/{school_id}/submissions/`; served via **signed temporary URLs** (15-min TTL) |
+| File Security | Submissions stored under private paths `/tenants/{school_id}/submissions/` (institutional) or `/tenants/users/{user_id}/submissions/` (independent); served via **signed temporary URLs** (15-min TTL) |
 | Auth | Laravel Breeze or Jetstream (session-based) |
 | Notifications | Laravel queued database + mail notifications; all implement `ShouldQueue` |
 | Queue Driver | Redis (production) or `database` driver (local); supervised via `php artisan queue:work` |
+| Parent Privacy | No live guardian login; weekly digest email dispatched by scheduler every Friday at 18:00 to `users.parent_email` |
+| Data Erasure | Administrative hard-purge tool performs `forceDelete()` + `Storage::deleteDirectory()` for full GDPR-style account removal |
 
 ---
 
@@ -43,6 +45,8 @@ All incoming requests must be scoped through a `MultiTenantMiddleware` layer tha
 ```
 
 > **Implementation:** A global Eloquent scope or base query macro must automatically append `WHERE school_id = {active_tenant_id}` to every query executed by `school_admin`, `teacher`, and `student` roles. `super_admin` is exempt.
+>
+> **Independent Tutor Bypass:** When `auth()->user()->is_independent === true`, the middleware skips school-level scoping entirely. Queries for classrooms and related data are instead constrained by `teacher_id = auth()->id()`, ensuring full data isolation without requiring a `school_id`.
 
 ### 0.2 Submission Processing Pipeline
 
@@ -55,15 +59,21 @@ To handle concurrent load spikes (hundreds of students submitting simultaneously
 [Server-side validation: MIME type, file size ≤ 10MB]
          │
          ▼
-[File written to private storage path]
+[Check allow_late_submissions if now() > due_date]
          │
-         ▼
-[DB record written — status: 'pending']
-         │
-         ▼
+   ┌─────┴─────────────────────────────────────────────────┐
+   ▼                                                       ▼
+(allow_late = true OR on time)               (allow_late = false AND overdue)
+   │                                                       │
+[File written to private storage path]       [Abort — return 422 Unprocessable Entity]
+   │
+   ▼
+[DB record written — status: 'submitted' or 'turned_in_late']
+   │
+   ▼
 [Dispatch NotifyTeacher job → Queue]
-         │
-         ▼
+   │
+   ▼
 [Background Worker: in-app alert + email to teacher]
 ```
 
