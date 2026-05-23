@@ -248,6 +248,24 @@ Use Laravel Policies (`app/Policies`) or the **Spatie Permission** package.
 
 > Implement a single `RoleMiddleware` registered in `bootstrap/app.php` that reads `auth()->user()->role` and aborts with `403` on mismatch.
 
+### Classroom Deletion Policy (`ClassroomPolicy@delete`)
+
+Institutional teachers (those assigned to a school) may only **archive** classrooms; permanent deletion requires admin intervention. Independent tutors retain full deletion rights over their own classrooms.
+
+```php
+public function delete(User $user, Classroom $classroom): Response
+{
+    if ($user->role === 'teacher' && !$user->is_independent) {
+        return $this->deny(
+            'Teachers inside an organisation can only archive classrooms. Contact your administrator for permanent deletion.'
+        );
+    }
+    return $user->id === $classroom->teacher_id || $user->role === 'school_admin'
+        ? Response::allow()
+        : Response::deny('Unauthorised.');
+}
+```
+
 ---
 
 ## 3. Core Epics & Feature Requirements
