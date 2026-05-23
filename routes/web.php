@@ -56,8 +56,9 @@ Route::prefix('teacher')
 
         // Grading
         Route::get('assignments/{assignment}/grade', [GradingController::class, 'index'])->name('grading.index');
-        Route::get('assignments/{assignment}/grade/{submission}', [GradingController::class, 'show'])->name('grading.show');
+        Route::get('submissions/{submission}/grade', [GradingController::class, 'show'])->name('grading.show');
         Route::patch('submissions/{submission}/grade', [GradingController::class, 'update'])->name('grading.update');
+        Route::get('submissions/{submission}/download', [GradingController::class, 'download'])->name('grading.download');
     });
 
 // ── Student Routes ────────────────────────────────────────────────────────────
