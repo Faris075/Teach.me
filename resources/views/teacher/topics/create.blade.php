@@ -13,7 +13,7 @@
 
     <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Add Topic</h1>
 
-    <form method="POST" action="{{ route('teacher.topics.store', $classroom) }}"
+    <form method="POST" action="{{ route('teacher.classrooms.topics.store', $classroom) }}"
           class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 space-y-5">
         @csrf
 

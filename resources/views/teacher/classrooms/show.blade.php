@@ -58,7 +58,7 @@
         <div class="lg:col-span-2 space-y-4">
             <div class="flex items-center justify-between">
                 <h2 class="text-base font-semibold text-slate-700 dark:text-slate-300">Topics & Assignments</h2>
-                <a href="{{ route('teacher.topics.create', $classroom) }}"
+                <a href="{{ route('teacher.classrooms.topics.create', $classroom) }}"
                    class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">+ Add Topic</a>
             </div>
 
