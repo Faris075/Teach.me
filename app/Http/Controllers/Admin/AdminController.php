@@ -25,7 +25,7 @@ class AdminController extends Controller
         $stats = [
             'users'      => $query->count('id'),
             'classrooms' => $classroomsQuery->count('id'),
-            'teachers'   => (clone $query)->whereIn('role', ['teacher', 'teacher'])->count('id'),
+            'teachers'   => (clone $query)->whereIn('role', ['teacher'])->count('id'),
             'students'   => (clone $query)->where('role', '=', 'student')->count('id'),
         ];
 
