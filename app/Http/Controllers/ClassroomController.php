@@ -83,7 +83,7 @@ class ClassroomController extends Controller
     public function destroy(Request $request, Classroom $classroom)
     {
         $this->authorize('delete', $classroom);
-        $classroom->delete();
+        $classroom->deleteOrFail();
         return redirect()->route('teacher.classrooms.index')
             ->with('success', 'Classroom deleted.');
     }
@@ -93,8 +93,8 @@ class ClassroomController extends Controller
     {
         // Validate signed URL if signature present, otherwise just show form
         if ($class_code && $request->hasValidSignature()) {
-            $classroom = Classroom::where('class_code', strtoupper($class_code))
-                ->where('status', 'active')
+            $classroom = Classroom::where('class_code', '=', strtoupper($class_code))
+                ->where('status', '=', 'active')
                 ->firstOrFail();
         } else {
             $classroom = null;
@@ -114,7 +114,7 @@ class ClassroomController extends Controller
         $code = strtoupper($data['class_code']);
 
         // Cross-tenant: scope to user's school (or return 404 if none found)
-        $query = Classroom::where('class_code', $code)->where('status', 'active');
+        $query = Classroom::where('class_code', '=', $code)->where('status', '=', 'active');
 
         if ($user->school_id) {
             $query->where('school_id', $user->school_id);
@@ -144,7 +144,7 @@ class ClassroomController extends Controller
         $attempts = 0;
         do {
             $code = Str::upper(Str::random(6));
-            $exists = Classroom::where('class_code', $code)->exists();
+            $exists = Classroom::where('class_code', '=', $code)->exists();
             $attempts++;
         } while ($exists && $attempts < 5);
 
