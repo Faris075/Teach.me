@@ -43,7 +43,7 @@ class TopicController extends Controller
     {
         $this->authorizeTeacher($request, $topic->classroom);
         $classroom = $topic->classroom;
-        $topic->delete();
+        $topic->delete(topic);
 
         return redirect()->route('teacher.classrooms.show', $classroom)
             ->with('success', 'Topic deleted.');
