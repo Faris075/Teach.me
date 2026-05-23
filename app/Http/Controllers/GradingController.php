@@ -52,7 +52,10 @@ class GradingController extends Controller
             abort(404);
         }
 
-        return Storage::disk('private')->download($submission->file_path);
+        return response()->download(
+            Storage::disk('private')->path($submission->file_path),
+            basename($submission->file_path)
+        );
     }
 
     public function update(Request $request, Submission $submission)
