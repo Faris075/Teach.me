@@ -52,8 +52,6 @@ Route::prefix('teacher')
 
         // Assignments
         Route::resource('classrooms.assignments', AssignmentController::class)->except(['show', 'index']);
-        Route::get('assignments/create', [AssignmentController::class, 'create'])->name('assignments.create');
-        Route::post('assignments', [AssignmentController::class, 'store'])->name('assignments.store');
         Route::get('assignments/{assignment}', [AssignmentController::class, 'show'])->name('assignments.show');
 
         // Grading
