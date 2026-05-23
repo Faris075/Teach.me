@@ -569,3 +569,219 @@ Execute sequentially. Do not advance until the current step is verified.
 - [ ] **STEP 10** — Build School Admin Analytics Hub (Epic 5) using `AVG(grade_numeric)`, `COUNT`, and `withCount` Eloquent aggregations.
 - [ ] **STEP 11** — Implement the Parent Digest Engine (Req 6.1): `SendParentDigests` job, `DigestMail` Mailable, scheduler registration (`weeklyOn(5, '18:00')`).
 - [ ] **STEP 12** — Implement the Hard Purge controller action (Req 6.2): `AdminController@hardPurgeUser`, storage directory deletion, `forceDelete()` cascade, confirmation token gate.
+
+---
+
+## 9. MVP Roadmap & Phase Plan
+
+> This section translates the 12 implementation steps into sequenced delivery phases with clear scope boundaries, acceptance gates, and a defined MVP cut-off. Features marked **✦ MVP** must be complete before any live deployment. Features marked **◇ Post-MVP** are scheduled for a follow-up release.
+
+---
+
+### MVP Scope Definition
+
+| Category | In MVP ✦ | Deferred ◇ |
+|---|---|---|
+| Auth & roles | Login, register, logout, RoleMiddleware | Social login, 2FA |
+| Schema | All revised tables, indices, seed data | Schema migrations for new features |
+| UI | Master layout, dark mode toggle | Livewire real-time updates |
+| Enrollment | Class code join, signed invite link | QR code download button |
+| Teacher flow | Classroom CRUD, topic CRUD, assignment creation, file upload | Material rich-text editor |
+| Student flow | Classroom stream, file/text submission, late-blocking | Re-submission on graded work |
+| Grading | Percentage mode, IGCSE letter mode, split-screen UI | Bulk grading |
+| Notifications | Database bell + unread count | Queued email delivery |
+| Admin | — | Full analytics hub (Epic 5) |
+| Parent digest | — | `SendParentDigests` scheduler (Req 6.1) |
+| Compliance | — | Hard purge controller (Req 6.2) |
+
+---
+
+### Phase 0 — Environment Bootstrap
+> **Goal:** Verified, runnable Laravel application connected to the database.
+
+**Tasks:**
+1. Confirm PHP 8.2+, Composer, and Node.js are available.
+2. Configure `.env`: set `DB_*` credentials, `APP_KEY`, `QUEUE_CONNECTION=database`.
+3. Run `composer install` and `npm install`.
+4. Install Laravel Breeze: `composer require laravel/breeze && php artisan breeze:install blade`.
+5. Install QR code package: `composer require simplesoftwareio/simple-qrcode`.
+6. Run `npm run build` to compile Tailwind assets.
+7. Run `php artisan migrate` to validate DB connectivity.
+8. Run `php artisan serve` and confirm `http://localhost:8000` loads.
+
+**Phase Gate:** `php artisan serve` starts without errors; `/` returns HTTP 200.
+
+---
+
+### Phase 1 — Data Foundation *(Steps 1 → 3)*
+> **Goal:** Correct schema in the database, seeded with all test roles, all model relationships wired.
+
+**Covers:** STEP 1, STEP 2 (schema + models only), STEP 3
+
+**Tasks:**
+1. Rewrite all migrations to match the Section 1 schema:
+   - `schools` — add `uuid`, `branding_config`, updated `status` enum, `deleted_at`.
+   - `users` — add `uuid`, `is_independent`, `parent_email`, `candidate_number` (indexed), `status`.
+   - `classrooms` — make `school_id` nullable, add `deleted_at`.
+   - `assignments` — add `allow_late_submissions`, `grading_type`, `max_score`, `deleted_at`.
+   - `submissions` — rename `grade` → `grade_numeric`, add `grade_literal`, update `status` enum (`pending` → `submitted`).
+2. Update all Eloquent models: fillable arrays, casts, relationships, SoftDeletes traits.
+3. Write `DatabaseSeeder` with: 1 School (`active`), 1 `super_admin`, 1 `school_admin`, 1 independent `teacher` (`school_id = null`, `is_independent = true`), 1 institutional `teacher`, 3 `student` accounts.
+4. Run `php artisan migrate:fresh --seed`.
+
+**Phase Gate:** `php artisan migrate:fresh --seed` exits 0; `php artisan tinker` confirms all seeded users and relationships resolve correctly.
+
+---
+
+### Phase 2 — Auth Shell & Middleware *(Steps 2 → 4)*
+> **Goal:** All role-restricted routes are guarded; master layout with dark mode is live.
+
+**Covers:** STEP 2 (Breeze + middleware), STEP 3 (route verification), STEP 4 (UI layout)
+
+**Tasks:**
+1. Publish Breeze views; customise register form to include `role` selection (student/teacher only for self-service; admin roles seeded only).
+2. Implement `RoleMiddleware`: reads `auth()->user()->role`, aborts 403 on mismatch.
+3. Implement `MultiTenantMiddleware`: resolves `school_id` from session; if `is_independent = true` sets `teacher_id` scope instead; skips for `super_admin`.
+4. Register both middleware aliases in `bootstrap/app.php`.
+5. Define route groups in `web.php`: `/teacher/*`, `/student/*`, `/admin/*` with appropriate guards.
+6. Implement `ClassroomPolicy@delete`.
+7. Build `resources/views/layouts/app.blade.php`:
+   - Top navbar: logo, user dropdown, dark mode sun/moon toggle, notification bell placeholder.
+   - Sidebar with role-appropriate links.
+   - `@yield('content')` main area.
+8. Wire dark mode toggle: add/remove `dark` class on `<html>`, persist to `localStorage`.
+
+**Phase Gate:** Visiting `/teacher/dashboard` as a `student` returns 403. Visiting `/student/dashboard` as a `teacher` returns 403. Dark mode toggle persists across page reloads.
+
+---
+
+### Phase 3 — Classroom & Enrollment ✦ MVP *(Step 5)*
+> **Goal:** Teacher can create and manage classrooms; students can join via class code and signed link.
+
+**Covers:** STEP 5
+
+**Tasks:**
+1. `ClassroomController`: `index`, `create`, `store`, `show`, `archive`, `destroy`.
+2. Class code generation: `Str::upper(Str::random(6))` with collision-retry loop (max 5).
+3. Enrolment flow: `POST /join` validates code against `classrooms` scoped to tenant (or 404 for cross-tenant). Inserts `classroom_student` record. Handles duplicate enrolment gracefully.
+4. Signed invite link: `URL::signedRoute('classroom.join', ['code' => $class_code])` displayed on classroom settings page.
+5. ✦ **MVP:** Class code + signed link working end-to-end.
+6. ◇ **Post-MVP:** QR code SVG render + PNG download button.
+
+**Phase Gate:** Student can join a classroom by entering the code; joining the same classroom twice returns a flash notice instead of an error; entering a code from another tenant returns 404.
+
+---
+
+### Phase 4 — Assignment & Submission Engine ✦ MVP *(Steps 6 → 7)*
+> **Goal:** Teacher creates assignments with all fields; students submit work; late-blocking enforced.
+
+**Covers:** STEP 6 (assignment creation), STEP 7 (student dashboard + submission)
+
+**Tasks:**
+1. Teacher dashboard — Classroom stream view: chronological card feed of assignments and materials.
+2. Topic management: create, rename, reorder (`sort_order`), delete. Sidebar filter.
+3. `AssignmentController@create` / `store`: form with `title`, `description`, `due_date` (Flatpickr), `max_score`, `grading_type` selector, `allow_late_submissions` toggle, optional file upload (PDF/DOCX, 10MB limit).
+4. File stored to `Storage::disk('local')->put("tenants/{teacherId|schoolId}/assignments/{uuid}.{ext}")`.
+5. Student dashboard — assignment cards with status badge (`Missing` · `Submitted` · `Graded` · `Turned In Late`).
+6. `SubmissionController@store`: MIME + size validation; late-blocking (HTTP 422 when `allow_late_submissions = false`); file stored under private submissions path; DB record created.
+
+**Phase Gate:** Teacher creates an assignment; student sees it in their stream with correct status badge; submitting after deadline with `allow_late_submissions = false` returns a validation error; submitting with flag `= true` creates a `turned_in_late` record.
+
+---
+
+### Phase 5 — Grading Engine ✦ MVP *(Step 8)*
+> **Goal:** Teacher grades all submission types; correct columns written; `GradePublished` event fires.
+
+**Covers:** STEP 8
+
+**Tasks:**
+1. `GradingController@show`: paginated submission list + split-screen view.
+2. Left pane: render submitted text or file download link (signed URL, 15-min TTL).
+3. Right pane: conditional on `assignments.grading_type`:
+   - `percentage`: numeric `<input>` bounded by `max_score` → writes `grade_numeric`.
+   - `igcse_letter`: `<select>` with options A\*, A, B, C, D, E, U and 9–1 → writes `grade_literal`; optional numeric companion input → writes `grade_numeric`.
+4. On save: set `graded_at = now()`, set `status = 'graded'`, fire `GradePublished` event.
+5. `GradePublished` listener: create `database` notification record for student; dispatch queued `GradePublishedMail` (✦ MVP: DB notification only; ◇ Post-MVP: email delivery).
+6. Navbar bell icon reads `auth()->user()->unreadNotifications->count()`; mark-as-read on click.
+
+**Phase Gate:** Teacher grades a percentage assignment; `submissions.grade_numeric` updated; student bell icon shows unread count 1. Teacher grades an IGCSE assignment; `submissions.grade_literal` updated. Signed URL for submitted file expires after 15 minutes.
+
+---
+
+### Phase 6 — Queued Notifications ◇ Post-MVP *(Step 9)*
+> **Goal:** Email delivery wired for both grade events and new assignment alerts.
+
+**Covers:** STEP 9
+
+**Tasks:**
+1. `NotifyClassroomStudents` job: iterates `classroom_student`, sends each student a `NewAssignmentNotification` (database + mail).
+2. `GradePublishedMail` Mailable: queued, implements `ShouldQueue`; renders grade summary to student email.
+3. Configure `MAIL_*` in `.env`; test with Mailpit or log driver locally.
+4. Run `php artisan queue:work` and verify jobs process.
+
+**Phase Gate:** Creating an assignment dispatches notifications visible in `php artisan queue:work` output. Grading a submission sends email to the student's address.
+
+---
+
+### Phase 7 — Admin Analytics Hub ◇ Post-MVP *(Step 10)*
+> **Goal:** School Admin has full visibility into teacher KPIs and student performance.
+
+**Covers:** STEP 10
+
+**Tasks:**
+1. `AdminController@teachers`: `withCount(['assignments', 'ungradedSubmissions'])`, turnaround computed via raw `AVG(TIMESTAMPDIFF(...))`.
+2. `AdminController@students`: per-student `AVG(grade_numeric)`, completion ratio, filterable by classroom.
+3. Chart.js grade-over-time line chart: `(graded_at, grade_numeric)` data points.
+
+**Phase Gate:** Admin dashboard displays correct counts; N+1 absent (verified with Laravel Debugbar or Telescope).
+
+---
+
+### Phase 8 — Compliance Layer ◇ Post-MVP *(Steps 11 → 12)*
+> **Goal:** Parent digest dispatches weekly; hard purge permanently removes all user data.
+
+**Covers:** STEP 11, STEP 12
+
+**Tasks:**
+1. `SendParentDigests` job + `DigestMail` Mailable; register `weeklyOn(5, '18:00')` in scheduler.
+2. `AdminController@hardPurgeUser`: `super_admin` only, confirmation token gate, `Storage::deleteDirectory`, `forceDelete()` cascade.
+
+**Phase Gate:** `php artisan schedule:run` dispatches digest emails for students with `parent_email` set. Hard purge removes all DB records and storage files; response is `204 No Content`.
+
+---
+
+### Phase Dependency Summary
+
+```
+Phase 0 (Bootstrap)
+    │
+    ▼
+Phase 1 (Data Foundation)
+    │
+    ▼
+Phase 2 (Auth Shell)
+    │
+    ├──▶ Phase 3 (Classrooms) ──▶ Phase 4 (Assignments) ──▶ Phase 5 (Grading)
+    │                                                              │
+    │                                                    ┌─────────┴─────────┐
+    │                                                    ▼                   ▼
+    │                                           Phase 6 (Email)    Phase 7 (Analytics)
+    │                                                    │
+    └───────────────────────────────────────────▶ Phase 8 (Compliance)
+```
+
+**MVP cut-off: end of Phase 5.** Phases 6–8 are independent parallel workstreams that do not block go-live.
+
+---
+
+### Credentials After Seeding
+
+| Role | Email | Password |
+|---|---|---|
+| Super Admin | `superadmin@teach.me` | `password` |
+| School Admin | `admin@teach.me` | `password` |
+| Independent Teacher | `teacher@teach.me` | `password` |
+| Institutional Teacher | `inst.teacher@teach.me` | `password` |
+| Student 1 | `student1@teach.me` | `password` |
+| Student 2 | `student2@teach.me` | `password` |
+| Student 3 | `student3@teach.me` | `password` |
