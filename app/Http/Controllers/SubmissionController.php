@@ -13,7 +13,7 @@ class SubmissionController extends Controller
     {
         $data = $request->validate([
             'assignment_id' => ['required', 'exists:assignments,id'],
-            'answer'        => ['nullable', 'string'],
+            'submitted_text' => ['nullable', 'string'],
             'file'          => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,png,jpg,jpeg'],
         ]);
 
@@ -45,7 +45,7 @@ class SubmissionController extends Controller
         $submission = Submission::create([
             'assignment_id' => $assignment->id,
             'student_id'    => $user->id,
-            'answer'        => $data['answer'] ?? null,
+            'submitted_text' => $data['submitted_text'] ?? null,
             'file_path'     => $filePath,
             'status'        => $isLate ? 'turned_in_late' : 'submitted',
             'submitted_at'  => now(),

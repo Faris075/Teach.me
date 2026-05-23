@@ -29,7 +29,7 @@ class GradePublishedNotification extends Notification
             'classroom_id'    => $assignment->topic->classroom_id,
             'grade_numeric'   => $this->submission->grade_numeric,
             'grade_literal'   => $this->submission->grade_literal,
-            'feedback'        => $this->submission->feedback,
+            'feedback'        => $this->submission->teacher_comment,
             'url'             => route('student.assignments.show', $assignment),
         ];
     }

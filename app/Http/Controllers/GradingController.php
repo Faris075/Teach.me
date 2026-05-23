@@ -66,13 +66,13 @@ class GradingController extends Controller
         $data = $request->validate([
             'grade_numeric' => $isIgcse ? ['nullable', 'numeric', 'min:0'] : ['required', 'numeric', 'min:0', 'max:' . $assignment->max_score],
             'grade_literal' => $isIgcse ? ['required', 'string', 'in:A*,A,B,C,D,E,F,G,U'] : ['nullable'],
-            'feedback'      => ['nullable', 'string', 'max:2000'],
+            'teacher_comment' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $submission->update([
             'grade_numeric' => $data['grade_numeric'] ?? null,
             'grade_literal' => $data['grade_literal'] ?? null,
-            'feedback'      => $data['feedback'] ?? null,
+            'teacher_comment' => $data['teacher_comment'] ?? null,
             'status'        => 'graded',
             'graded_at'     => now(),
         ]);
