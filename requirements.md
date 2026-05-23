@@ -380,7 +380,7 @@ $$\text{Completion Ratio} = \left(\frac{\text{COUNT(submissions)}}{\text{COUNT(a
 
 ---
 
-## 6. Data Privacy & Compliance
+## 4. Data Privacy & Compliance
 
 ### Req 6.1 — Privacy-First Parent Digest Engine
 
@@ -435,7 +435,7 @@ An administrative controller action (`AdminController@hardPurgeUser`) provides G
 
 ---
 
-## 4. Operational System Flows & Business Rules
+## 5. Operational System Flows & Business Rules
 
 ### Flow 1 — Secure Class Enrolment Lifecycle
 
@@ -491,7 +491,7 @@ An administrative controller action (`AdminController@hardPurgeUser`) provides G
 
 ---
 
-## 5. UI/UX Design System
+## 6. UI/UX Design System
 
 ### Colour Tokens
 
@@ -521,7 +521,7 @@ An administrative controller action (`AdminController@hardPurgeUser`) provides G
 
 ---
 
-## 6. File Storage Strategy
+## 7. File Storage Strategy
 
 ### Storage Paths
 | Content Type | Path | Visibility |
