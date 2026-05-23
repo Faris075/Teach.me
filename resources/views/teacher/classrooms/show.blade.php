@@ -66,7 +66,7 @@
                 <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold text-slate-800 dark:text-white">{{ $topic->title }}</h3>
-                        <a href="{{ route('teacher.assignments.create', ['classroom' => $classroom, 'topic' => $topic]) }}"
+                        <a href="{{ route('teacher.classrooms.assignments.create', ['classroom' => $classroom, 'topic' => $topic]) }}"
                            class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">+ Assignment</a>
                     </div>
                     @forelse($topic->assignments as $assignment)

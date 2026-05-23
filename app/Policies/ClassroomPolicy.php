@@ -110,7 +110,7 @@ class ClassroomPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    private function forceDelete(User $user, Classroom $classroom): bool
+     function forceDelete(User $user, Classroom $classroom): bool
     {
         return false;
     }
