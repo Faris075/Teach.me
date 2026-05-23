@@ -526,9 +526,12 @@ An administrative controller action (`AdminController@hardPurgeUser`) provides G
 ### Storage Paths
 | Content Type | Path | Visibility |
 |---|---|---|
-| Assignment attachments | `tenants/{school_id}/assignments/{filename}` | Private |
-| Student submissions | `tenants/{school_id}/submissions/{filename}` | **Private** |
-| Material files | `tenants/{school_id}/materials/{filename}` | Private |
+| Assignment attachments (institutional) | `tenants/{school_id}/assignments/{filename}` | Private |
+| Assignment attachments (independent) | `tenants/users/{user_id}/assignments/{filename}` | Private |
+| Student submissions (institutional) | `tenants/{school_id}/submissions/{filename}` | **Private** |
+| Student submissions (independent) | `tenants/users/{user_id}/submissions/{filename}` | **Private** |
+| Material files (institutional) | `tenants/{school_id}/materials/{filename}` | Private |
+| Material files (independent) | `tenants/users/{user_id}/materials/{filename}` | Private |
 | School logos / branding | `tenants/{school_id}/branding/{filename}` | Public |
 
 ### Read / Write Pattern
@@ -550,16 +553,19 @@ $url = Storage::disk('private')->temporaryUrl(
 
 ---
 
-## 7. Step-by-Step Implementation Checklist
+## 8. Step-by-Step Implementation Checklist
 
 Execute sequentially. Do not advance until the current step is verified.
 
-- [x] **STEP 1** — ~~Generate all migrations, models, and Eloquent relationships per Section 1. Confirm foreign key cascades and SoftDeletes are present.~~ ✅ Complete
-- [ ] **STEP 2** — Implement Laravel Breeze authentication. Build `RoleMiddleware` and register route groups per Section 2.
-- [ ] **STEP 3** — Create database seeders: 1 default School, 1 Super Admin, 1 School Admin, 1 Teacher, 3 Students. Verify all role-restricted routes respond correctly.
-- [ ] **STEP 4** — Build the master Blade layout with Tailwind CSS. Implement light/dark mode toggle with session persistence.
-- [ ] **STEP 5** — Implement Epic 1: class code input, signed invite link, QR code generation.
-- [ ] **STEP 6** — Build Teacher Dashboard: topic management, material uploads, assignment creation (Epic 2 & 3).
-- [ ] **STEP 7** — Build Student Dashboard: classroom stream, submission portal, grade/comment view (Epic 3).
-- [ ] **STEP 8** — Implement Epic 4: queued `NotifyClassroomStudents` job and `GradePublished` event/listener with database + mail notifications.
-- [ ] **STEP 9** — Build School Admin Analytics Hub (Epic 5) using Eloquent aggregations (`AVG`, `COUNT`, `withCount`).
+- [ ] **STEP 1** — Regenerate all migrations and models per the revised Section 1 schema. New columns: `users.is_independent`, `users.parent_email`, `classrooms.school_id` (nullable), `assignments.allow_late_submissions`, `assignments.grading_type`, `submissions.grade_numeric`, `submissions.grade_literal`; rename `submissions.grade`; update status enum to replace `pending` with `submitted`. Confirm all indices (`class_code`, `candidate_number`) and foreign key cascades are present.
+- [ ] **STEP 2** — Implement Laravel Breeze authentication. Build `RoleMiddleware`, `MultiTenantMiddleware` (with `is_independent` bypass), and `ClassroomPolicy@delete` per Section 2. Register all route groups.
+- [ ] **STEP 3** — Create database seeders: 1 default School, 1 Super Admin, 1 School Admin, 1 independent Teacher (no school), 1 institutional Teacher, 3 Students. Verify all role-restricted routes and the classroom deletion policy respond correctly.
+- [ ] **STEP 4** — Build the master Blade layout with Tailwind CSS. Implement light/dark mode toggle with `localStorage` + user meta persistence.
+- [ ] **STEP 5** — Implement Epic 1: class code input, signed invite link, QR code generation. Include all edge-case guards (cross-tenant isolation, archived class, collision retry).
+- [ ] **STEP 6** — Build Teacher Dashboard: topic management, material uploads, assignment creation form with `grading_type` selector and `allow_late_submissions` toggle (Epics 2 & 3).
+- [ ] **STEP 7** — Build Student Dashboard: classroom stream, submission portal with late-blocking logic, grade/comment view displaying both `grade_numeric` and `grade_literal` (Epic 3).
+- [ ] **STEP 8** — Implement the hybrid Grading Engine UI (Req 3.3): percentage mode (numeric input) and IGCSE letter mode (dropdown). Wire `GradePublished` event to fire on save of either grade field (Epic 4).
+- [ ] **STEP 9** — Implement Epic 4 notifications: queued `NotifyClassroomStudents` job and `GradePublished` event/listener with database + mail channels.
+- [ ] **STEP 10** — Build School Admin Analytics Hub (Epic 5) using `AVG(grade_numeric)`, `COUNT`, and `withCount` Eloquent aggregations.
+- [ ] **STEP 11** — Implement the Parent Digest Engine (Req 6.1): `SendParentDigests` job, `DigestMail` Mailable, scheduler registration (`weeklyOn(5, '18:00')`).
+- [ ] **STEP 12** — Implement the Hard Purge controller action (Req 6.2): `AdminController@hardPurgeUser`, storage directory deletion, `forceDelete()` cascade, confirmation token gate.
