@@ -453,12 +453,15 @@ An administrative controller action (`AdminController@hardPurgeUser`) provides G
 
 1. Student uploads file or text response.
 2. Server validates: MIME type (`application/pdf`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `image/png`, `image/jpeg`) and size ≤ 10MB.
-3. File stored to `Storage::disk('private')->put("tenants/{school_id}/submissions/{filename}")`.
-4. Late check: if `now() > assignment.due_date`, status is set to `'turned_in_late'`.
-5. DB record created with `status = 'pending'` (or `'turned_in_late'`).
+3. **Late check:**
+   - If `now() ≤ due_date`: proceed normally.
+   - If `now() > due_date` AND `allow_late_submissions = false`: abort, return HTTP 422.
+   - If `now() > due_date` AND `allow_late_submissions = true`: accept, flag status `'turned_in_late'`.
+4. File stored to `Storage::disk('private')->put("tenants/{school_id}/submissions/{filename}")`.
+5. DB record created with `status = 'submitted'` (or `'turned_in_late'`).
 6. `NotifyTeacherNewSubmission` job dispatched → queued background worker sends in-app alert.
 7. Teacher opens grading view → accesses file via **signed temporary URL** (15-min TTL).
-8. Teacher saves grade → `GradePublished` event fires → listener dispatches:
+8. Teacher saves `grade_numeric` or `grade_literal` → `GradePublished` event fires → listener dispatches:
    - Database notification (in-app bell).
    - Queued email to student.
 
@@ -469,8 +472,22 @@ An administrative controller action (`AdminController@hardPurgeUser`) provides G
 1. **School Admin** navigates to analytics hub (scoped to their `school_id`).
 2. **Teacher KPI panel** runs `withCount(['assignments', 'submissions' => fn($q) => $q->whereNull('graded_at')])` per teacher.
 3. **Grading turnaround** computed as `AVG(TIMESTAMPDIFF(MINUTE, created_at, graded_at))` per teacher.
-4. **Student performance table** runs per-student `AVG(grade)` and submission/assignment ratio.
-5. **Grade timeline chart** pulls `(submissions.graded_at, submissions.grade)` per student, rendered via Chart.js line chart.
+4. **Student performance table** runs per-student `AVG(grade_numeric)` and submission/assignment ratio.
+5. **Grade timeline chart** pulls `(submissions.graded_at, submissions.grade_numeric)` per student, rendered via Chart.js line chart.
+
+---
+
+### Flow 4 — Parent Digest Lifecycle
+
+1. Laravel Scheduler fires `SendParentDigests` job every **Friday at 18:00**.
+2. Job queries all `active` students where `parent_email IS NOT NULL`.
+3. For each student, the aggregation service computes:
+   - `AVG(grade_numeric)` for submissions in the past 7 days.
+   - Count of assignments past `due_date` with no submission record (`Missing`).
+   - Last 3 non-null `teacher_comment` snippets.
+4. A queued `DigestMail` Mailable is dispatched to `users.parent_email`.
+5. The email renders a clean HTML summary containing only the student's first name and the three metrics above — no file links, chat history, or submission content.
+6. Failed deliveries are retried up to 3 times via the queue; failures do not block subsequent digest dispatches.
 
 ---
 
