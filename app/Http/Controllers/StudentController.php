@@ -45,4 +45,18 @@ class StudentController extends Controller
 
         return view('student.assignment', compact('assignment', 'submission', 'classroom'));
     }
+
+    public function notifications(Request $request)
+    {
+        $notifications = $request->user()->notifications()->latest()->paginate(20);
+        $request->user()->unreadNotifications->markAsRead();
+        return view('student.notifications', compact('notifications'));
+    }
+
+    public function markRead(Request $request, string $notificationId)
+    {
+        $notification = $request->user()->notifications()->findOrFail($notificationId);
+        $notification->markAsRead();
+        return back();
+    }
 }
