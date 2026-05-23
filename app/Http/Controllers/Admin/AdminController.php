@@ -23,10 +23,10 @@ class AdminController extends Controller
         }
 
         $stats = [
-            'users'      => $query->count(),
-            'classrooms' => $classroomsQuery->count(),
-            'teachers'   => (clone $query)->whereIn('role', ['teacher'])->count(),
-            'students'   => (clone $query)->where('role', 'student')->count(),
+            'users'      => $query->count('id'),
+            'classrooms' => $classroomsQuery->count('id'),
+            'teachers'   => (clone $query)->whereIn('role', ['teacher', 'teacher'])->count('id'),
+            'students'   => (clone $query)->where('role', '=', 'student')->count('id'),
         ];
 
         $schools = $user->role === 'super_admin' ? School::withCount('users')->latest()->get() : collect();
