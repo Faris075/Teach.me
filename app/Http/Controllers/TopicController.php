@@ -2,63 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Classroom;
+use App\Models\Topic;
 use Illuminate\Http\Request;
 
 class TopicController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function create(Request $request, Classroom $classroom)
     {
-        //
+        $this->authorizeTeacher($request, $classroom);
+        return view('teacher.topics.create', compact('classroom'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request, Classroom $classroom)
     {
-        //
+        $this->authorizeTeacher($request, $classroom);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+        ]);
+
+        $data['order'] = $classroom->topics()->max('order') + 1;
+        $classroom->topics()->create($data);
+
+        return redirect()->route('teacher.classrooms.show', $classroom)
+            ->with('success', 'Topic created.');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function update(Request $request, Topic $topic)
     {
-        //
+        $this->authorizeTeacher($request, $topic->classroom);
+
+        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $topic->update($data);
+
+        return back()->with('success', 'Topic updated.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function destroy(Request $request, Topic $topic)
     {
-        //
+        $this->authorizeTeacher($request, $topic->classroom);
+        $classroom = $topic->classroom;
+        $topic->delete();
+
+        return redirect()->route('teacher.classrooms.show', $classroom)
+            ->with('success', 'Topic deleted.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    private function authorizeTeacher(Request $request, Classroom $classroom): void
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $user = $request->user();
+        if ($user->role !== 'super_admin' && $user->id !== $classroom->teacher_id) {
+            abort(403);
+        }
     }
 }
