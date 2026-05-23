@@ -125,12 +125,14 @@ To handle concurrent load spikes (hundreds of students submitting simultaneously
 |---|---|---|
 | `id` | BigInt PK | |
 | `uuid` | UUID, Unique | Used in public-facing URLs |
-| `school_id` | BigInt, Nullable, FK → `schools.id` | `NULL` only for `super_admin` |
+| `school_id` | BigInt, Nullable, FK → `schools.id` | `NULL` for `super_admin` and independent tutors |
+| `is_independent` | Boolean, Default: `true` | `true` = full self-deletion rights; `false` = institutional teacher, archive-only |
 | `name` | String | |
 | `email` | String, Unique | |
 | `password` | String | Hashed via `bcrypt` |
 | `role` | Enum: `super_admin`, `school_admin`, `teacher`, `student` | |
-| `candidate_number` | String, Nullable | IGCSE / national exam tracking |
+| `candidate_number` | String, Nullable, **Indexed** | IGCSE / national exam tracking; indexed for fast lookup |
+| `parent_email` | String, Nullable | Target address for weekly privacy-safe digest emails |
 | `status` | Enum: `active`, `inactive` | Default: `active` |
 | `remember_token` | String | |
 | `timestamps` | | |
@@ -142,7 +144,7 @@ To handle concurrent load spikes (hundreds of students submitting simultaneously
 | Column | Type | Notes |
 |---|---|---|
 | `id` | BigInt PK | |
-| `school_id` | BigInt, FK → `schools.id` | |
+| `school_id` | BigInt, Nullable, FK → `schools.id` | `NULL` for independent tutors |
 | `teacher_id` | BigInt, FK → `users.id` | |
 | `name` | String | e.g., "IGCSE English Second Language" |
 | `class_code` | String(8), Unique, **Indexed** | 6–8 alphanumeric chars; index for fast join lookups |
@@ -195,6 +197,8 @@ To handle concurrent load spikes (hundreds of students submitting simultaneously
 | `description` | LongText | |
 | `file_path` | String, Nullable | Attached resource (PDF/DOCX) |
 | `due_date` | DateTime | |
+| `allow_late_submissions` | Boolean, Default: `true` | If `false`, submissions are blocked the moment `now() > due_date` |
+| `grading_type` | Enum: `percentage`, `igcse_letter` | Dictates which grading UI components are rendered |
 | `max_score` | Decimal(5,2), Default: 100.00 | Supports regional grading scales |
 | `timestamps` | | |
 | `deleted_at` | Timestamp, Nullable | SoftDeletes |
@@ -207,11 +211,12 @@ To handle concurrent load spikes (hundreds of students submitting simultaneously
 | `id` | BigInt PK | |
 | `assignment_id` | BigInt, FK → `assignments.id` | |
 | `student_id` | BigInt, FK → `users.id` | |
-| `file_path` | String, Nullable | Stored under `/tenants/{school_id}/submissions/` |
+| `file_path` | String, Nullable | Stored under `/tenants/{school_id​\|user_id}/submissions/` |
 | `submitted_text` | LongText, Nullable | Text-response alternative |
-| `grade` | Decimal(5,2), Nullable | Set on grading |
+| `grade_numeric` | Decimal(5,2), Nullable | Raw numeric value; used for all statistical aggregations (GPA, turnaround, charts) |
+| `grade_literal` | String(4), Nullable | Letter or symbol grade (e.g., `A*`, `9`, `B`); set when `grading_type = 'igcse_letter'` |
 | `teacher_comment` | Text, Nullable | Qualitative feedback |
-| `status` | Enum: `pending`, `graded`, `turned_in_late` | Default: `pending` |
+| `status` | Enum: `submitted`, `graded`, `turned_in_late` | Default: `submitted` |
 | `graded_at` | Timestamp, Nullable | Set when grade is saved |
 | `timestamps` | | |
 
