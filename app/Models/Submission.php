@@ -10,7 +10,7 @@ class Submission extends Model
     protected $fillable = [
         'assignment_id', 'student_id', 'file_path',
         'submitted_text', 'grade_numeric', 'grade_literal',
-        'teacher_comment', 'status', 'graded_at',
+        'teacher_comment', 'status', 'submitted_at', 'graded_at',
     ];
 
     protected function casts(): array
