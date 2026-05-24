@@ -29,6 +29,23 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{{ $sub->student->name }}</p>
                         </div>
+                        @if($sub->grade_literal)
+                            @php
+                                $gradeClass = match($sub->grade_literal) {
+                                    'A*' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+                                    'A'  => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+                                    'B'  => 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400',
+                                    'C'  => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+                                    'D'  => 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+                                    'E'  => 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+                                    'F'  => 'bg-orange-200 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
+                                    'G'  => 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+                                    'U'  => 'bg-red-200 dark:bg-red-900/40 text-red-800 dark:text-red-300',
+                                    default => 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+                                };
+                            @endphp
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0 {{ $gradeClass }}">{{ $sub->grade_literal }}</span>
+                        @endif
                         <span class="w-2 h-2 rounded-full flex-shrink-0 {{ $sub->status === 'graded' ? 'bg-green-400' : ($sub->status === 'turned_in_late' ? 'bg-yellow-400' : 'bg-blue-400') }}"></span>
                     </a>
                 @endforeach

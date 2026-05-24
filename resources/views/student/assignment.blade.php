@@ -38,15 +38,29 @@
             </div>
 
             @if($submission->status === 'graded')
-                <div class="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-700">
-                    <p class="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">Grade</p>
+                @php
+                    $gcMap = [
+                        'A*' => ['box' => 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700', 'label' => 'text-purple-700 dark:text-purple-300', 'value' => 'text-purple-800 dark:text-purple-200', 'note' => 'text-purple-700 dark:text-purple-300'],
+                        'A'  => ['box' => 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700',   'label' => 'text-green-700 dark:text-green-400',   'value' => 'text-green-800 dark:text-green-300',   'note' => 'text-green-700 dark:text-green-400'],
+                        'B'  => ['box' => 'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-700',       'label' => 'text-teal-700 dark:text-teal-400',     'value' => 'text-teal-800 dark:text-teal-300',     'note' => 'text-teal-700 dark:text-teal-400'],
+                        'C'  => ['box' => 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700',       'label' => 'text-blue-700 dark:text-blue-400',     'value' => 'text-blue-800 dark:text-blue-300',     'note' => 'text-blue-700 dark:text-blue-400'],
+                        'D'  => ['box' => 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700','label' => 'text-yellow-700 dark:text-yellow-500', 'value' => 'text-yellow-800 dark:text-yellow-300', 'note' => 'text-yellow-700 dark:text-yellow-500'],
+                        'E'  => ['box' => 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700','label' => 'text-orange-700 dark:text-orange-400', 'value' => 'text-orange-800 dark:text-orange-300', 'note' => 'text-orange-700 dark:text-orange-400'],
+                        'F'  => ['box' => 'bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700','label' => 'text-orange-700 dark:text-orange-300','value' => 'text-orange-900 dark:text-orange-200', 'note' => 'text-orange-700 dark:text-orange-300'],
+                        'G'  => ['box' => 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700',           'label' => 'text-red-600 dark:text-red-400',       'value' => 'text-red-700 dark:text-red-300',       'note' => 'text-red-600 dark:text-red-400'],
+                        'U'  => ['box' => 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700',          'label' => 'text-red-700 dark:text-red-300',       'value' => 'text-red-800 dark:text-red-200',       'note' => 'text-red-700 dark:text-red-300'],
+                    ];
+                    $gc = $gcMap[$submission->grade_literal ?? ''] ?? ['box' => 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700', 'label' => 'text-green-700 dark:text-green-400', 'value' => 'text-green-800 dark:text-green-300', 'note' => 'text-green-700 dark:text-green-400'];
+                @endphp
+                <div class="mb-4 p-4 rounded-xl border {{ $gc['box'] }}">
+                    <p class="text-sm font-semibold {{ $gc['label'] }} mb-1">Grade</p>
                     @if($submission->grade_literal)
-                        <p class="text-2xl font-bold text-green-800 dark:text-green-300">{{ $submission->grade_literal }}</p>
+                        <p class="text-2xl font-bold {{ $gc['value'] }}">{{ $submission->grade_literal }}</p>
                     @elseif($submission->grade_numeric !== null)
-                        <p class="text-2xl font-bold text-green-800 dark:text-green-300">{{ $submission->grade_numeric }} / {{ $assignment->max_score }}</p>
+                        <p class="text-2xl font-bold {{ $gc['value'] }}">{{ $submission->grade_numeric }} / {{ $assignment->max_score }}</p>
                     @endif
                     @if($submission->teacher_comment)
-                        <p class="text-sm text-green-700 dark:text-green-400 mt-2">{{ $submission->teacher_comment }}</p>
+                        <p class="text-sm {{ $gc['note'] }} mt-2">{{ $submission->teacher_comment }}</p>
                     @endif
                 </div>
             @endif
