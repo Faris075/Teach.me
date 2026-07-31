@@ -20,7 +20,7 @@ Route::get('/', function () {
             default                       => 'student.dashboard',
         });
     }
-    return redirect()->route('login');
+    return view('welcome');
 });
 
 // ── Class Join (guest-accessible) ────────────────────────────────────────────

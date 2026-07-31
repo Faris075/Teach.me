@@ -613,6 +613,113 @@ Execute sequentially. Do not advance until the current step is verified.
 
 ---
 
+## Security Requirements
+
+### 1. Application & Core Infrastructure Security
+
+- **Input Sanitization & Validation:** Strictly sanitize all inputs (form fields, file uploads, search bars) on the backend to prevent **SQL Injection (SQLi)**, **Cross-Site Scripting (XSS)**, and command injections.
+- **File Upload Hardening:**
+  - Restrict allowed MIME types and file extensions (e.g., PDF, DOCX, submission files).
+  - Store uploaded files outside the public web root or in isolated cloud storage (e.g., S3 bucket with private access).
+  - Scan uploaded assignments or attachments for malware.
+- **API Security & Rate Limiting:**
+  - Implement rate limiting on login, password reset, and sensitive endpoints to prevent brute-force and credential-stuffing attacks.
+  - Validate user permissions on **every** API endpoint, not just on the front-end router (prevent **Insecure Direct Object References / IDOR**).
+- **Dependencies & Patching:** Keep all framework versions, libraries, and packages up-to-date to patch known vulnerabilities. Use automated dependency scanners (e.g., Dependabot, Snyk).
+
+### 2. Authentication & Access Control (AuthN / AuthZ)
+
+- **Role-Based Access Control (RBAC):**
+  - Enforce strict boundary separation between roles (e.g., `Student`, `Teacher`, `Admin`, `Parent`).
+  - Ensure students can **only** query/view their own grades, submissions, and personal data.
+- **Authentication Hygiene:**
+  - Store passwords using strong, modern hashing algorithms (e.g., **Argon2id** or **Bcrypt** with appropriate work factors).
+  - Require Multi-Factor Authentication (MFA/2FA) for faculty and elevated administrative accounts.
+- **Session Security:**
+  - Use secure session cookies (`HttpOnly`, `Secure`, `SameSite=Strict`/`Lax`) to prevent cookie theft via XSS.
+  - Implement reasonable session timeout periods, especially for shared lab or classroom devices.
+
+### 3. Data Security & Storage
+
+- **Encryption in Transit:** Enforce **HTTPS / TLS 1.3** across all routes. Ensure HSTS (HTTP Strict Transport Security) is enabled so plaintext HTTP traffic is rejected.
+- **Encryption at Rest:** Encrypt sensitive fields in the database (or the whole database volume) using **AES-256**. This includes grades, personal details, and messaging histories.
+- **Data Minimization:** Collect **only** the data necessary for educational functionality (e.g., avoid requesting home addresses or social security numbers unless legally mandated).
+- **Backups & Key Management:**
+  - Maintain encrypted database backups and test restoration procedures regularly.
+  - Store encryption keys in an isolated Key Management Service (KMS) or Vault—never hardcode keys or secrets in source code.
+
+### 4. Educational Privacy & Compliance
+
+- **Regulatory Compliance:**
+  - **FERPA (US):** Ensures student educational records remain private and accessible only to authorized personnel.
+  - **COPPA (US):** If students under 13 use the app, parental consent and strict privacy constraints are mandatory.
+  - **GDPR / Local Data Protection:** Ensure users have a clear **Privacy Policy**, consent mechanisms for non-essential cookies, and rights to request data deletion/export (Right to be Forgotten / DSAR).
+- **Audit Logging & Monitoring:**
+  - Maintain immutable log records for sensitive administrative actions (e.g., changing grades, exporting user lists, modifying user roles).
+  - Anonymize or strip PII from application error logs.
+
+### 5. Deep Application & Logic Flaws (The Real Attack Surface)
+
+- **Insecure Direct Object References (IDOR) on Submissions & Grades:**
+  - *The Trap:* Accessing `/api/submissions/4092` might be authorized for Student A, but if changing the URL to `/api/submissions/4093` lets them view Student B's homework or exam, your authorization model failed.
+  - *Fix:* Enforce **object-level authorization** at the service/repository layer. Validate `request.user.id == submission.student_id` or `request.user` is the assigned instructor for that specific section.
+- **Race Conditions in Quiz & Assignment Submissions:**
+  - *The Trap:* A student fires 50 parallel requests to `/api/quiz/submit` right before the timer ends, triggering a double-submission bug or overwriting their score with a previous attempt.
+  - *Fix:* Use **atomic database transactions**, pessimistic locking, or idempotency keys for timed state transitions.
+- **Time-Travel & Clock Manipulation Attacks:**
+  - *The Trap:* Relying on client-side timestamps for deadline checks or exam timers.
+  - *Fix:* All time checks **must originate from server-side UTC timestamps**. Disable state mutations the exact millisecond the server clock marks the deadline.
+- **Mass Assignment Vulnerabilities:**
+  - *The Trap:* Sending a payload like `{"name": "John", "role": "teacher"}` to a profile update endpoint that blindly updates database fields.
+  - *Fix:* Explicitly map DTOs (Data Transfer Objects) / Request Schemas. Never pass request body objects directly into ORM `save()` or `update()` methods.
+
+### 6. Media, File Uploads & Static Asset Exploits
+
+- **Remote Code Execution (RCE) via Document Parsers:**
+  - *The Trap:* Students upload PDF/DOCX assignments or images. If your backend uses unpatched/outdated PDF or image processing libraries (e.g., ImageMagick, PDF parsers), malicious payloads inside uploaded files can execute code on your server.
+  - *Fix:* Run all file processing/parsing jobs inside **isolated sandboxes (unprivileged containers or serverless workers)** with zero local storage access.
+- **Storage Bucket Metadata & Direct URL Enumeration:**
+  - *The Trap:* Storing student file uploads with predictable paths like `/uploads/assignments/student_12/essay.pdf`.
+  - *Fix:* Use **UUID v4 filenames** and serve files via **short-lived signed URLs** (e.g., AWS S3 Signed URLs expiring in 15 minutes) rather than public bucket paths.
+- **Stored XSS via File Attachments:**
+  - *The Trap:* A student uploads an `.html` file disguised as a text document. When an instructor clicks to view it, the HTML renders in their browser session, stealing their admin session cookie.
+  - *Fix:* Force `Content-Disposition: attachment` headers on file downloads to prevent inline browser rendering of uploaded files, or serve user assets from a completely separate untrusted domain (e.g., `user-content.example.com`).
+
+### 7. Real-Time & WebSockets Security
+
+If the app has live chat, virtual classrooms, or real-time quiz updates:
+
+- **WebSocket Authentication Persistence:**
+  - *The Trap:* Authenticating the connection on the initial HTTP handshake, but never re-evaluating token expiration or role changes during long-lived WebSocket sessions.
+  - *Fix:* Implement heartbeat auth checks or periodically re-validate tokens. Immediately close active sockets if a user's session is revoked or permissions change.
+- **Publish/Subscribe Channel Authorization:**
+  - *The Trap:* Broadcaster mechanisms where a client can subscribe to arbitrary channel IDs (e.g., `classroom:physics-101:chat` or `grades:section-A`).
+  - *Fix:* Enforce server-side channel authorization rules before allowing subscription bindings.
+- **Socket Rate-Limiting & Resource Exhaustion:**
+  - *The Trap:* Students spamming live socket messages to crash the classroom room for everyone else.
+  - *Fix:* Apply rate limit counters per socket connection at the API gateway / WebSocket broker layer.
+
+### 8. Multi-Tenancy & Data Isolation
+
+- **Cross-Tenant Data Leakage:**
+  - *The Trap:* Querying `User::all()` or forgetting a `WHERE school_id = X` clause in a database query, leaking School A's data to School B.
+  - *Fix:* Use **Global Query Scopes** / middleware at the ORM layer to automatically scope queries by tenant, or enforce Row-Level Security (RLS) directly inside the database engine (e.g., PostgreSQL RLS policies).
+- **Subdomain Hijacking & CORS Misconfigurations:**
+  - *The Trap:* Configuring wildcard CORS (`Access-Control-Allow-Origin: *`) with `credentials: true`.
+  - *Fix:* Use a strict whitelist of allowed origin domains. If using multi-tenant subdomains (`school1.app.com`), validate origins against valid active tenants.
+
+### 9. Infrastructure, Pipeline & Secret Hygiene
+
+- **Environment Secret Spills:**
+  - Never commit `.env` files, JWT secret keys, or database credentials to code repos. Use secret managers (HashiCorp Vault, AWS Secrets Manager).
+- **Database Connection Pooling & Resource Exhaustion (DoS):**
+  - *The Trap:* A surge of 5,000 students submitting an exam simultaneously exhausts backend database connections, crashing the app mid-exam.
+  - *Fix:* Implement connection pooling (e.g., PgBouncer), background job queues (Redis/RabbitMQ) for expensive tasks like grade generation, and aggressive backend caching (Redis) for read-heavy resources (lesson contents).
+- **Error Message Information Disclosure:**
+  - Ensure stack traces, raw SQL queries, and framework error screens (e.g., Laravel debug mode) are completely disabled in production. Return clean, generic JSON error objects (e.g., `{"error": "Resource not found", "code": 404}`).
+
+---
+
 ### Phase 1 — Data Foundation *(Steps 1 → 3)*
 > **Goal:** Correct schema in the database, seeded with all test roles, all model relationships wired.
 
