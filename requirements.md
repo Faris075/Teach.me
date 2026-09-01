@@ -1,6 +1,6 @@
 # Functional Requirements Specification (FRS)
-### Project: Teach.me — LMS Classroom Platform (MVP → Multi-School SaaS)
-> **Revision 3** — Extended with independent-tutor multi-tenancy model, hybrid grading engine, privacy-first parent digest, data erasure compliance, and flexible late-submission controls.
+### Project: Teach.me — Social Course Platform (Udemy/Coursera Style + Classroom SaaS)
+> **Revision 4** — Extended with marketplace-style course journeys, friend graph, friend-to-course invites, progress comparison, AWS service integration, and AI chatbot recommendations.
 
 ---
 
@@ -21,6 +21,39 @@
 | Queue Driver | Redis (production) or `database` driver (local); supervised via `php artisan queue:work` |
 | Parent Privacy | No live guardian login; weekly digest email dispatched by scheduler every Friday at 18:00 to `users.parent_email` |
 | Data Erasure | Administrative hard-purge tool performs `forceDelete()` + `Storage::deleteDirectory()` for full GDPR-style account removal |
+| AI Layer | AWS Bedrock primary provider with deterministic local fallback for degraded mode |
+| Cloud Services | AWS S3 for course/media assets, AWS SES for notifications, AWS CloudWatch for queue/chatbot telemetry |
+
+---
+
+## 0.3 Social + Recommendation Layer
+
+### Friend Graph
+- Students can send friend requests by email and accept/decline inbound requests.
+- Friendship status lifecycle: `pending -> accepted|declined`.
+- Cross-tenant friend links are blocked by default for managed schools unless explicitly enabled.
+
+### Friend Course Invites
+- A student already enrolled in a course/classroom can invite accepted friends into that course.
+- Invites support optional message text and status lifecycle: `pending -> accepted|declined`.
+- Accepting an invite auto-enrolls the invitee in the target course and records `joined_at`.
+
+### Progress Comparison
+- Student dashboard includes friend counts and pending request counts.
+- A compare view lists per-course completion percentages for the current user and accepted friends in the same course.
+- Completion percentage formula remains:
+
+$$
+	ext{Progress} = \left(\frac{\text{Submitted Assignments}}{\text{Total Assignments In Course}}\right) \times 100\%
+$$
+
+### AI Chatbot Recommendations
+- Students can submit natural-language prompts (study goals, exam prep focus, subject gaps).
+- Recommendation context includes enrolled course names and current progress.
+- Provider policy:
+  - Primary: AWS Bedrock model configured by `AWS_BEDROCK_MODEL_ID`.
+  - Fallback: local deterministic recommendation engine if AWS or model call is unavailable.
+- Every prompt/response pair is audit logged for explainability and product analytics.
 
 ---
 
