@@ -10,12 +10,15 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TopicController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // ── Home ──────────────────────────────────────────────────────────────────────
 Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route(match(auth()->user()->role) {
+    $user = Auth::user();
+
+    if ($user) {
+        return redirect()->route(match($user->role) {
             'super_admin', 'school_admin' => 'admin.dashboard',
             'teacher'                     => 'teacher.dashboard',
             default                       => 'student.dashboard',
