@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Friendship;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -16,7 +18,26 @@ class StudentController extends Controller
             ->latest('classroom_student.joined_at')
             ->get();
 
-        return view('student.dashboard', compact('classrooms'));
+        $friendIds = Friendship::query()
+            ->where('status', 'accepted')
+            ->where(function ($q) use ($user) {
+                $q->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
+            })
+            ->get()
+            ->map(function (Friendship $friendship) use ($user) {
+                return $friendship->requester_id === $user->id ? (int) $friendship->addressee_id : (int) $friendship->requester_id;
+            });
+
+        $pendingFriendRequests = Friendship::query()
+            ->where('addressee_id', $user->id)
+            ->where('status', 'pending')
+            ->count();
+
+        return view('student.dashboard', [
+            'classrooms' => $classrooms,
+            'friendsCount' => $friendIds->count(),
+            'pendingFriendRequests' => $pendingFriendRequests,
+        ]);
     }
 
     public function showClassroom(Request $request, \App\Models\Classroom $classroom)
@@ -29,7 +50,26 @@ class StudentController extends Controller
 
         $classroom->load(['topics.assignments' => fn($q) => $q->orderBy('due_date')]);
 
-        return view('student.classroom', compact('classroom'));
+        $friendIds = Friendship::query()
+            ->where('status', 'accepted')
+            ->where(function ($q) use ($user) {
+                $q->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
+            })
+            ->get()
+            ->map(function (Friendship $friendship) use ($user) {
+                return $friendship->requester_id === $user->id ? (int) $friendship->addressee_id : (int) $friendship->requester_id;
+            })
+            ->values();
+
+        $inviteableFriends = User::query()
+            ->whereIn('id', $friendIds)
+            ->whereDoesntHave('enrolledClassrooms', function ($q) use ($classroom) {
+                $q->where('classrooms.id', $classroom->id);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        return view('student.classroom', compact('classroom', 'inviteableFriends'));
     }
 
     public function showAssignment(Request $request, \App\Models\Assignment $assignment)
