@@ -40,11 +40,6 @@ class Classroom extends Model
         return $this->hasMany(Assignment::class)->latest();
     }
 
-    public function materials(): HasMany
-    {
-        return $this->hasMany(Material::class, Topic::class);
-    }
-
     public function friendInvites(): HasMany
     {
         return $this->hasMany(ClassroomFriendInvite::class);
