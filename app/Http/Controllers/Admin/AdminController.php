@@ -51,8 +51,10 @@ class AdminController extends Controller
         $aiLogQuery = AiRecommendationLog::query();
 
         if ($schoolId) {
-            $friendshipQuery->whereHas('requester', fn ($q) => $q->where('school_id', $schoolId))
-                ->orWhereHas('addressee', fn ($q) => $q->where('school_id', $schoolId));
+            $friendshipQuery->where(function ($q) use ($schoolId) {
+                $q->whereHas('requester', fn ($q2) => $q2->where('school_id', $schoolId))
+                    ->orWhereHas('addressee', fn ($q2) => $q2->where('school_id', $schoolId));
+            });
 
             $inviteQuery->whereHas('classroom', fn ($q) => $q->where('school_id', $schoolId));
 
