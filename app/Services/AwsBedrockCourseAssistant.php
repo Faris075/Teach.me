@@ -15,14 +15,21 @@ class AwsBedrockCourseAssistant
 
         try {
             $clientClass = 'Aws\\BedrockRuntime\\BedrockRuntimeClient';
-            $client = new $clientClass([
+            $clientConfig = [
                 'version' => 'latest',
                 'region' => config('services.bedrock.region'),
-                'credentials' => [
+            ];
+
+            // Only pass explicit credentials if configured; otherwise let the SDK
+            // fall back to its default provider chain (e.g. ~/.aws/credentials from `aws configure`).
+            if (config('services.bedrock.key') && config('services.bedrock.secret')) {
+                $clientConfig['credentials'] = [
                     'key' => config('services.bedrock.key'),
                     'secret' => config('services.bedrock.secret'),
-                ],
-            ]);
+                ];
+            }
+
+            $client = new $clientClass($clientConfig);
 
             $modelId = (string) config('services.bedrock.model_id');
             $systemPrompt = 'You are a course recommendation assistant for a social learning platform. Return only JSON with key "recommendations" as an array of up to 5 objects having title and reason.';
@@ -80,9 +87,9 @@ class AwsBedrockCourseAssistant
 
     private function isConfigured(): bool
     {
-        return (bool) config('services.bedrock.key')
-            && (bool) config('services.bedrock.secret')
-            && (bool) config('services.bedrock.region')
+        // Explicit .env credentials are optional — the AWS SDK can also resolve
+        // credentials from ~/.aws/credentials (via `aws configure`), an IAM role, etc.
+        return (bool) config('services.bedrock.region')
             && (bool) config('services.bedrock.model_id');
     }
 
