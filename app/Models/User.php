@@ -73,4 +73,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(Submission::class, 'student_id');
     }
+
+    public function sentFriendRequests(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'requester_id');
+    }
+
+    public function receivedFriendRequests(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'addressee_id');
+    }
+
+    public function sentClassroomFriendInvites(): HasMany
+    {
+        return $this->hasMany(ClassroomFriendInvite::class, 'inviter_id');
+    }
+
+    public function receivedClassroomFriendInvites(): HasMany
+    {
+        return $this->hasMany(ClassroomFriendInvite::class, 'invitee_id');
+    }
 }
