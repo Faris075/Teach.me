@@ -19,6 +19,21 @@
         </a>
     </div>
 
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Friends</p>
+            <p class="text-2xl font-bold text-slate-800 dark:text-white mt-1">{{ $friendsCount }}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Pending Requests</p>
+            <p class="text-2xl font-bold text-slate-800 dark:text-white mt-1">{{ $pendingFriendRequests }}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-4">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">AI Coach</p>
+            <a href="{{ route('student.chatbot') }}" class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-block mt-2">Get recommendations</a>
+        </div>
+    </div>
+
     @if($classrooms->isEmpty())
         <div class="text-center py-20 text-slate-400 dark:text-slate-500">
             <svg class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
