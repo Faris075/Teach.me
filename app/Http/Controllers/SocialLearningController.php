@@ -17,11 +17,7 @@ class SocialLearningController extends Controller
     {
         $user = $request->user();
 
-        $friends = Friendship::query()
-            ->where('status', 'accepted')
-            ->where(function ($q) use ($user) {
-                $q->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
-            })
+        $friends = $this->acceptedFriendshipsQuery($user->id)
             ->with(['requester:id,name,email', 'addressee:id,name,email'])
             ->latest('accepted_at')
             ->get()
@@ -67,14 +63,22 @@ class SocialLearningController extends Controller
             return back()->with('error', 'You can only add friends from the same school tenant.');
         }
 
-        [$requesterId, $addresseeId] = $user->id < $friend->id
-            ? [$user->id, $friend->id]
-            : [$friend->id, $user->id];
+        $friendship = Friendship::query()
+            ->where(function ($q) use ($user, $friend) {
+                $q->where('requester_id', $user->id)->where('addressee_id', $friend->id);
+            })
+            ->orWhere(function ($q) use ($user, $friend) {
+                $q->where('requester_id', $friend->id)->where('addressee_id', $user->id);
+            })
+            ->first();
 
-        $friendship = Friendship::query()->firstOrCreate(
-            ['requester_id' => $requesterId, 'addressee_id' => $addresseeId],
-            ['status' => 'pending']
-        );
+        if (! $friendship) {
+            $friendship = Friendship::query()->create([
+                'requester_id' => $user->id,
+                'addressee_id' => $friend->id,
+                'status' => 'pending',
+            ]);
+        }
 
         if ($friendship->status === 'accepted') {
             return back()->with('success', 'You are already connected as friends.');
@@ -171,16 +175,7 @@ class SocialLearningController extends Controller
     {
         $user = $request->user();
 
-        $friendIds = Friendship::query()
-            ->where('status', 'accepted')
-            ->where(function ($q) use ($user) {
-                $q->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
-            })
-            ->get()
-            ->map(function (Friendship $friendship) use ($user) {
-                return $friendship->requester_id === $user->id ? (int) $friendship->addressee_id : (int) $friendship->requester_id;
-            })
-            ->values();
+        $friendIds = $this->acceptedFriendIds($user->id);
 
         $classrooms = $user->enrolledClassrooms()->with('students:id,name')->get();
 
@@ -235,7 +230,7 @@ class SocialLearningController extends Controller
             })->values()->all(),
         ];
 
-        $recommendations = $assistant->recommend($user, $data['prompt'], $context);
+        $recommendations = $assistant->recommend($data['prompt'], $context);
 
         AiRecommendationLog::query()->create([
             'user_id' => $user->id,
@@ -260,14 +255,35 @@ class SocialLearningController extends Controller
 
     private function areFriends(int $userId, int $friendId): bool
     {
-        [$requesterId, $addresseeId] = $userId < $friendId
-            ? [$userId, $friendId]
-            : [$friendId, $userId];
-
-        return Friendship::query()
-            ->where('requester_id', $requesterId)
-            ->where('addressee_id', $addresseeId)
-            ->where('status', 'accepted')
+        return $this->acceptedFriendshipsQuery($userId)
+            ->where(function ($q) use ($userId, $friendId) {
+                $q->where(function ($q2) use ($userId, $friendId) {
+                    $q2->where('requester_id', $userId)->where('addressee_id', $friendId);
+                })->orWhere(function ($q2) use ($userId, $friendId) {
+                    $q2->where('requester_id', $friendId)->where('addressee_id', $userId);
+                });
+            })
             ->exists();
+    }
+
+    private function acceptedFriendIds(int $userId)
+    {
+        return $this->acceptedFriendshipsQuery($userId)
+            ->get()
+            ->map(function (Friendship $friendship) use ($userId) {
+                return $friendship->requester_id === $userId
+                    ? (int) $friendship->addressee_id
+                    : (int) $friendship->requester_id;
+            })
+            ->values();
+    }
+
+    private function acceptedFriendshipsQuery(int $userId)
+    {
+        return Friendship::query()
+            ->where('status', 'accepted')
+            ->where(function ($q) use ($userId) {
+                $q->where('requester_id', $userId)->orWhere('addressee_id', $userId);
+            });
     }
 }
