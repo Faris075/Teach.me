@@ -33,5 +33,27 @@
             @endforeach
         </div>
     @endif
+
+    <h2 class="text-base font-semibold text-slate-700 dark:text-slate-300 mb-3 mt-8">Social Learning Analytics</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div class="rounded-2xl bg-teal-50 dark:bg-teal-900/20 p-5 border border-transparent">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Connected Friends</p>
+            <p class="text-3xl font-bold text-teal-600 dark:text-teal-400 mt-1">{{ $socialStats['accepted_friendships'] }}</p>
+        </div>
+        <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-5 border border-transparent">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Pending Requests</p>
+            <p class="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ $socialStats['pending_friend_requests'] }}</p>
+        </div>
+        <div class="rounded-2xl bg-sky-50 dark:bg-sky-900/20 p-5 border border-transparent">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Invite Acceptance Rate</p>
+            <p class="text-3xl font-bold text-sky-600 dark:text-sky-400 mt-1">{{ $socialStats['invite_acceptance_rate'] }}%</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ $socialStats['accepted_course_invites'] }} / {{ $socialStats['total_course_invites'] }} accepted</p>
+        </div>
+        <div class="rounded-2xl bg-fuchsia-50 dark:bg-fuchsia-900/20 p-5 border border-transparent">
+            <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">AI Recommendations</p>
+            <p class="text-3xl font-bold text-fuchsia-600 dark:text-fuchsia-400 mt-1">{{ $socialStats['ai_recommendations_generated'] }}</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ $socialStats['ai_bedrock_calls'] }} via AWS Bedrock</p>
+        </div>
+    </div>
 </div>
 @endsection
