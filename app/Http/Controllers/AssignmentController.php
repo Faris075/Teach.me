@@ -13,7 +13,7 @@ class AssignmentController extends Controller
     {
         $this->authorizeTeacher($request, $classroom);
         $topic = $request->query('topic') ? Topic::findOrFail($request->query('topic')) : null;
-        $topics = $classroom->topics()->orderBy('order')->get();
+        $topics = $classroom->topics()->orderBy('sort_order')->get();
         return view('teacher.assignments.create', compact('classroom', 'topics', 'topic'));
     }
 
