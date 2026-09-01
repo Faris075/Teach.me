@@ -6,8 +6,8 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
+        "aws/aws-sdk-php": "^3.337",
         "php": "^8.2",
-        "aws/aws-sdk-php": "3.337",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },
