@@ -18,15 +18,7 @@ class StudentController extends Controller
             ->latest('classroom_student.joined_at')
             ->get();
 
-        $friendIds = Friendship::query()
-            ->where('status', 'accepted')
-            ->where(function ($q) use ($user) {
-                $q->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
-            })
-            ->get()
-            ->map(function (Friendship $friendship) use ($user) {
-                return $friendship->requester_id === $user->id ? (int) $friendship->addressee_id : (int) $friendship->requester_id;
-            });
+        $friendIds = $this->acceptedFriendIds($user->id);
 
         $pendingFriendRequests = Friendship::query()
             ->where('addressee_id', $user->id)
@@ -50,16 +42,7 @@ class StudentController extends Controller
 
         $classroom->load(['topics.assignments' => fn($q) => $q->orderBy('due_date')]);
 
-        $friendIds = Friendship::query()
-            ->where('status', 'accepted')
-            ->where(function ($q) use ($user) {
-                $q->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
-            })
-            ->get()
-            ->map(function (Friendship $friendship) use ($user) {
-                return $friendship->requester_id === $user->id ? (int) $friendship->addressee_id : (int) $friendship->requester_id;
-            })
-            ->values();
+        $friendIds = $this->acceptedFriendIds($user->id);
 
         $inviteableFriends = User::query()
             ->whereIn('id', $friendIds)
@@ -98,5 +81,21 @@ class StudentController extends Controller
         $notification = $request->user()->notifications()->findOrFail($notificationId);
         $notification->markAsRead();
         return back();
+    }
+
+    private function acceptedFriendIds(int $userId)
+    {
+        return Friendship::query()
+            ->where('status', 'accepted')
+            ->where(function ($q) use ($userId) {
+                $q->where('requester_id', $userId)->orWhere('addressee_id', $userId);
+            })
+            ->get()
+            ->map(function (Friendship $friendship) use ($userId) {
+                return $friendship->requester_id === $userId
+                    ? (int) $friendship->addressee_id
+                    : (int) $friendship->requester_id;
+            })
+            ->values();
     }
 }
