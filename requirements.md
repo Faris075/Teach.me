@@ -44,7 +44,7 @@
 - Completion percentage formula remains:
 
 $$
-	ext{Progress} = \left(\frac{\text{Submitted Assignments}}{\text{Total Assignments In Course}}\right) \times 100\%
+  ext{Progress} = \left(\frac{\text{Submitted Assignments}}{\text{Total Assignments In Course}}\right) \times 100\%
 $$
 
 ### AI Chatbot Recommendations
