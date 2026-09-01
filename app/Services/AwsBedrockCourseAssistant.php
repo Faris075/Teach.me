@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class AwsBedrockCourseAssistant
 {
-    public function recommend(User $user, string $prompt, array $context): array
+    public function recommend(string $prompt, array $context): array
     {
         if (! $this->isConfigured() || ! class_exists('Aws\\BedrockRuntime\\BedrockRuntimeClient')) {
             return $this->fallbackRecommendations($context);
@@ -28,32 +27,28 @@ class AwsBedrockCourseAssistant
             $modelId = (string) config('services.bedrock.model_id');
             $systemPrompt = 'You are a course recommendation assistant for a social learning platform. Return only JSON with key "recommendations" as an array of up to 5 objects having title and reason.';
 
-            $payload = [
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => [['text' => $systemPrompt]],
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => [[
-                            'text' => json_encode([
-                                'prompt' => $prompt,
-                                'context' => $context,
-                            ], JSON_THROW_ON_ERROR),
-                        ]],
-                    ],
+            $messages = [
+                [
+                    'role' => 'system',
+                    'content' => [['text' => $systemPrompt]],
                 ],
-                'max_tokens' => 700,
-                'temperature' => 0.5,
+                [
+                    'role' => 'user',
+                    'content' => [[
+                        'text' => json_encode([
+                            'prompt' => $prompt,
+                            'context' => $context,
+                        ], JSON_THROW_ON_ERROR),
+                    ]],
+                ],
             ];
 
             $result = $client->converse([
                 'modelId' => $modelId,
-                'messages' => $payload['messages'],
+                'messages' => $messages,
                 'inferenceConfig' => [
-                    'maxTokens' => $payload['max_tokens'],
-                    'temperature' => $payload['temperature'],
+                    'maxTokens' => 700,
+                    'temperature' => 0.5,
                 ],
             ]);
 
