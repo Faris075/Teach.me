@@ -5,6 +5,7 @@ use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\GradingController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SocialLearningController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\TeacherController;
@@ -72,6 +73,16 @@ Route::prefix('student')
         Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store');
         Route::get('notifications', [StudentController::class, 'notifications'])->name('notifications');
         Route::patch('notifications/{notification}/read', [StudentController::class, 'markRead'])->name('notifications.read');
+
+        // Social learning
+        Route::get('friends', [SocialLearningController::class, 'friends'])->name('friends.index');
+        Route::post('friends/requests', [SocialLearningController::class, 'sendFriendRequest'])->name('friends.request');
+        Route::patch('friends/requests/{friendship}', [SocialLearningController::class, 'respondFriendRequest'])->name('friends.respond');
+        Route::post('classrooms/{classroom}/friend-invites', [SocialLearningController::class, 'inviteFriendToClassroom'])->name('classrooms.friend-invites.store');
+        Route::patch('friend-invites/{invite}', [SocialLearningController::class, 'respondClassroomInvite'])->name('friend-invites.respond');
+        Route::get('compare-progress', [SocialLearningController::class, 'compareProgress'])->name('compare-progress');
+        Route::get('chatbot', [SocialLearningController::class, 'chatbot'])->name('chatbot');
+        Route::post('chatbot/recommend', [SocialLearningController::class, 'recommend'])->name('chatbot.recommend');
     });
 
 // ── Admin Routes ──────────────────────────────────────────────────────────────

@@ -44,4 +44,9 @@ class Classroom extends Model
     {
         return $this->hasMany(Material::class, Topic::class);
     }
+
+    public function friendInvites(): HasMany
+    {
+        return $this->hasMany(ClassroomFriendInvite::class);
+    }
 }
