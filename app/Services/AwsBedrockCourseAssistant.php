@@ -90,6 +90,17 @@ class AwsBedrockCourseAssistant
             && (bool) config('services.bedrock.model_id');
     }
 
+    private function stripJsonCodeFence(string $text): string
+    {
+        $trimmed = trim($text);
+
+        if (preg_match('/^```(?:json)?\s*(.*?)\s*```$/is', $trimmed, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return $trimmed;
+    }
+
     private function fallbackRecommendations(array $context): array
     {
         $courseNames = collect($context['enrolled_courses'] ?? [])->take(3)->values();
