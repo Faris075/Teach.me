@@ -36,10 +36,6 @@ class AwsBedrockCourseAssistant
 
             $messages = [
                 [
-                    'role' => 'system',
-                    'content' => [['text' => $systemPrompt]],
-                ],
-                [
                     'role' => 'user',
                     'content' => [[
                         'text' => json_encode([
@@ -53,6 +49,7 @@ class AwsBedrockCourseAssistant
             $result = $client->converse([
                 'modelId' => $modelId,
                 'messages' => $messages,
+                'system' => [['text' => $systemPrompt]],
                 'inferenceConfig' => [
                     'maxTokens' => 700,
                     'temperature' => 0.5,
