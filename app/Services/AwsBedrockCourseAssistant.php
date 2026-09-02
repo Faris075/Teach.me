@@ -57,7 +57,7 @@ class AwsBedrockCourseAssistant
             ]);
 
             $text = Arr::get($result, 'output.message.content.0.text', '{}');
-            $decoded = json_decode((string) $text, true);
+            $decoded = json_decode($this->stripJsonCodeFence((string) $text), true);
 
             if (! is_array($decoded) || ! isset($decoded['recommendations']) || ! is_array($decoded['recommendations'])) {
                 return $this->fallbackRecommendations($context);
